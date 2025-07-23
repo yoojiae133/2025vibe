@@ -5,9 +5,9 @@ import streamlit as st
 st.set_page_config(page_title="MBTI 학습 성향 분석", page_icon="📘")
 
 st.title("📘 MBTI 기반 학습 성향 분석기")
-st.write("아래 질문에 답하면, 당신의 MBTI 성격 유형과 그에 맞는 학습 스타일을 알려드려요!")
+st.write("12가지 질문에 답하면, 당신의 MBTI와 학습 성향을 분석해드릴게요!")
 
-# 질문 구성
+# 질문 리스트 (MBTI 4축 × 3문항)
 questions = [
     ("다른 사람들과 함께 있을 때 에너지가 생긴다", "혼자 있을 때 에너지가 충전된다", "E", "I"),
     ("여럿이 떠드는 분위기가 즐겁다", "조용한 대화나 혼자 있는 것이 편하다", "E", "I"),
@@ -26,49 +26,100 @@ questions = [
     ("정리되고 예측 가능한 생활이 좋다", "즉흥적이고 자유로운 게 편하다", "J", "P"),
 ]
 
-mbti_scores = {"E": 0, "I": 0, "S": 0, "N": 0, "T": 0, "F": 0, "J": 0, "P": 0}
+# 점수 기록용
+mbti_scores = {key: 0 for key in "EISNTFJP"}
 
-# 질문에 답하기
-for i, (opt1, opt2, type1, type2) in enumerate(questions):
-    choice = st.radio(f"{i+1}.", [opt1, opt2], key=f"q{i}")
-    if choice == opt1:
-        mbti_scores[type1] += 1
-    else:
-        mbti_scores[type2] += 1
+# 질문 반복 출력
+for idx, (q1, q2, type1, type2) in enumerate(questions):
+    answer = st.radio(f"{idx+1}.", [q1, q2], key=f"q{idx}")
+    mbti_scores[type1 if answer == q1 else type2] += 1
 
-# 결과 계산
-if st.button("📊 내 MBTI 분석하기"):
-    mbti = ""
-    mbti += "E" if mbti_scores["E"] >= 2 else "I"
-    mbti += "S" if mbti_scores["S"] >= 2 else "N"
-    mbti += "T" if mbti_scores["T"] >= 2 else "F"
-    mbti += "J" if mbti_scores["J"] >= 2 else "P"
+# 버튼 눌렀을 때 결과 계산
+if st.button("📊 결과 확인하기"):
+    mbti = (
+        ("E" if mbti_scores["E"] >= 2 else "I") +
+        ("S" if mbti_scores["S"] >= 2 else "N") +
+        ("T" if mbti_scores["T"] >= 2 else "F") +
+        ("J" if mbti_scores["J"] >= 2 else "P")
+    )
 
-    st.subheader(f"당신의 MBTI 유형은 **{mbti}**입니다!")
+    st.subheader(f"🧬 당신의 MBTI 유형은 **{mbti}**입니다!")
 
-    # 학습 성향 사전
-    learning_styles = {
-        "INTJ": "계획적이고 구조화된 학습을 선호합니다. 독립적 탐구에 능하며 스스로 목표를 설정하는 것이 효과적입니다.",
-        "INTP": "이론과 개념 탐구를 좋아합니다. 토론보다 글쓰기를 통해 사고를 정리하는 것이 좋습니다.",
-        "ENTJ": "논리적 구조와 도전적인 과제를 선호합니다. 토론과 발표를 통한 학습이 효과적입니다.",
-        "ENTP": "새로운 아이디어를 교환하는 걸 좋아합니다. 자유로운 환경에서 프로젝트형 학습이 잘 맞습니다.",
-        "INFJ": "깊이 있는 이해와 의미를 중시합니다. 조용한 환경에서 정리된 자료를 활용하는 것이 좋습니다.",
-        "INFP": "창의적인 글쓰기나 감성적 주제를 좋아합니다. 자기표현을 허용하는 학습 환경이 필요합니다.",
-        "ENFJ": "다른 사람과 함께할 때 학습 동기가 올라갑니다. 설명하거나 도와주는 것이 기억에 도움됩니다.",
-        "ENFP": "즉흥적이고 다양한 자극을 좋아합니다. 고정된 틀보다는 변화 있는 활동이 효과적입니다.",
-        "ISTJ": "체계적이고 정리된 정보를 선호합니다. 계획표를 세워 규칙적으로 학습하는 게 효과적입니다.",
-        "ISFJ": "안정적인 환경과 구체적인 예시가 잘 맞습니다. 반복 학습과 복습이 중요합니다.",
-        "ESTJ": "실용적인 학습에 강합니다. 성취와 결과가 분명한 과제에서 동기부여됩니다.",
-        "ESFJ": "협력적인 분위기에서 학습을 잘합니다. 친구와 함께하는 공부에 적응력이 좋습니다.",
-        "ISTP": "혼자서 탐색하며 배우는 것을 선호합니다. 실험이나 문제 해결 기반 활동이 잘 맞습니다.",
-        "ISFP": "감각적이고 조용한 환경이 좋습니다. 시각 자료나 창작 활동을 통한 학습이 효과적입니다.",
-        "ESTP": "직접 경험하고 체험하는 걸 선호합니다. 활동 중심의 학습이 좋습니다.",
-        "ESFP": "재미와 상호작용이 있는 활동을 좋아합니다. 발표, 연극, 게임 기반 학습에 적합합니다.",
+    # 상세 학습 성향 분석 데이터
+    learning_profiles = {
+        "INTJ": {
+            "style": "혼자 깊이 파고드는 학습을 선호하며, 체계적으로 계획하고 정리하는 스타일입니다. 논리적 사고와 전략 세우기에 강점이 있습니다.",
+            "environment": "조용하고 방해받지 않는 환경에서 집중력이 극대화됩니다.",
+            "strategies": [
+                "명확한 목표와 데드라인 설정",
+                "마인드맵이나 구조화된 요약 정리",
+                "개념 간의 관계를 스스로 재구성"
+            ],
+            "boost_tips": [
+                "복잡한 개념은 직접 가르치듯 정리해보기",
+                "학습 전 전체 구조를 시각화해보세요",
+                "체계적인 일정표를 만들고 지키는 훈련"
+            ]
+        },
+        "ENFP": {
+            "style": "다양한 주제에 관심이 많고 즉흥적으로 학습할 때 흥미가 생깁니다. 창의적이고 활발한 활동을 좋아합니다.",
+            "environment": "자유롭고 변화 있는 환경에서 동기부여가 잘 됩니다. 반복보다는 새로움에 끌립니다.",
+            "strategies": [
+                "다양한 학습 자료(영상, 팟캐스트 등) 활용",
+                "마감 전 자유롭게 탐색 후 압축 정리",
+                "다른 사람과 대화하며 아이디어 정리"
+            ],
+            "boost_tips": [
+                "타이머를 활용해 짧은 시간 집중(예: Pomodoro)",
+                "학습 주제를 게임이나 이야기처럼 만들어보기",
+                "학습 후 정리 내용을 친구에게 설명해보세요"
+            ]
+        },
+        "ISFJ": {
+            "style": "차분하고 계획적인 학습을 선호합니다. 반복과 복습을 통해 안정적으로 이해하는 편입니다.",
+            "environment": "정돈된 공간, 안정적인 분위기, 정해진 시간에 학습하는 것을 선호합니다.",
+            "strategies": [
+                "복습 중심의 스케줄 관리",
+                "정리된 필기 + 반복 암기 카드 활용",
+                "예시 중심의 이해 및 메모 습관"
+            ],
+            "boost_tips": [
+                "작은 성공을 체크리스트로 시각화",
+                "학습 목표를 세분화하여 성취감 느끼기",
+                "스터디 그룹에서 요약 담당해보기"
+            ]
+        },
+        "ENTP": {
+            "style": "새로운 아이디어나 문제 해결을 즐기며 토론과 비교 분석을 좋아합니다. 구조보다는 유연한 흐름을 선호합니다.",
+            "environment": "열린 토론, 실험적 분위기, 다이나믹한 변화가 있는 환경에서 에너지가 올라갑니다.",
+            "strategies": [
+                "친구와 학습 내용에 대해 자유롭게 토론",
+                "개념을 비교하고 반박해보며 이해",
+                "학습 자료를 직접 수정하거나 재구성"
+            ],
+            "boost_tips": [
+                "학습 내용을 카드 형식으로 정리하고 섞어보기",
+                "지식 설명 영상을 직접 찍어보기",
+                "유튜브·블로그에서 타인의 시각 탐색"
+            ]
+        },
+        # 생략된 MBTI는 필요시 계속 추가 가능
     }
 
-    # 결과 출력
-    st.markdown("---")
-    st.markdown(f"### 📖 학습 성향 분석 결과")
-    st.write(learning_styles.get(mbti, "MBTI 유형 분석 결과가 없습니다. 질문 수를 늘려 정밀도를 높여보세요."))
+    profile = learning_profiles.get(mbti)
+    if profile:
+        st.markdown("---")
+        st.subheader("🎓 당신의 학습 성향 분석")
+        st.markdown(f"**학습 스타일:** {profile['style']}")
+        st.markdown(f"**잘 맞는 환경:** {profile['environment']}")
+        st.markdown("**📌 효과적인 학습 전략:**")
+        for item in profile["strategies"]:
+            st.markdown(f"- {item}")
+        st.markdown("**✅ 공부 능률을 높이는 행동 팁:**")
+        for item in profile["boost_tips"]:
+            st.markdown(f"- {item}")
+    else:
+        st.warning("아직 이 MBTI 유형에 대한 데이터가 준비되지 않았어요. 계속해서 업데이트할게요!")
+
 
 
